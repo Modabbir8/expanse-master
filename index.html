@@ -170,7 +170,7 @@ var MOF=['January','February','March','April','May','June','July','August','Sept
 var FOOD=['food_outside','room_food'];
 var MEALS=[{id:'breakfast',l:'Breakfast',i:'🌅'},{id:'lunch',l:'Lunch',i:'☀️'},{id:'dinner',l:'Dinner',i:'🌙'},{id:'snacks',l:'Snacks',i:'🍪'}];
 var CATS={
-  personal:[{id:'food_outside',l:'Food/Dining',i:'🍽️'},{id:'transport',l:'Transport',i:'🚗'},{id:'shopping',l:'Shopping',i:'🛍️'},{id:'entertainment',l:'Entertainment',i:'🎬'},{id:'health',l:'Health',i:'💊'},{id:'subscriptions',l:'Subscriptions',i:'📱'},{id:'personal_other',l:'Other',i:'👤'}],
+  personal:[{id:'food_outside',l:'Food/Dining',i:'🍽️'},{id:'transport',l:'Transport',i:'🚗'},{id:'shopping',l:'Shopping',i:'🛍️'},{id:'entertainment',l:'Entertainment',i:'🎬'},{id:'health',l:'Health',i:'💊'},{id:'subscriptions',l:'Subscriptions',i:'📱'},{id:'fuel',l:'Fuel',i:'⛽'},{id:'mobile_recharge',l:'Mobile Recharge',i:'📲'},{id:'travel_ticket',l:'Travel Ticket',i:'🎫'},{id:'personal_other',l:'Other',i:'👤'}],
   room:[{id:'rent',l:'Rent',i:'🏠'},{id:'electricity',l:'Electricity',i:'⚡'},{id:'water',l:'Water',i:'💧'},{id:'wifi',l:'WiFi',i:'📶'},{id:'maintenance',l:'Maintenance',i:'🔧'},{id:'groceries',l:'Groceries',i:'🛒'},{id:'cooking_gas',l:'Cooking Gas',i:'🔥'},{id:'room_food',l:'Food/Dining',i:'🍽️'},{id:'room_other',l:'Other',i:'🏡'}],
   investment:[{id:'mutual_fund',l:'Mutual Fund/SIP',i:'📈'},{id:'stocks',l:'Stocks',i:'📊'},{id:'etf',l:'ETF',i:'🌐'},{id:'fd',l:'Fixed Deposit',i:'🏦'},{id:'ppf',l:'PPF/NPS',i:'🛡️'},{id:'gold',l:'Gold/SGB',i:'🥇'},{id:'inv_other',l:'Other',i:'💼'}]
 };
@@ -350,7 +350,7 @@ function addForm(type,successPatch){
       var btn=el('button','cb'+(S.fm===m.id?' on':''));
       btn.style.cssText=S.fm===m.id?'background:#6366f1;border-color:#6366f1':'';
       btn.textContent=m.i+' '+m.l;
-      btn.addEventListener('click',function(){ss({fm:m.id});});
+      btn.addEventListener('click',function(){S.fa=ain?ain.value:S.fa;S.fd=din?din.value:S.fd;S.fn=nin?nin.value:S.fn;ss({fm:m.id});});
       mw.appendChild(btn);
     });
     ap(wrap,mw);
@@ -360,6 +360,7 @@ function addForm(type,successPatch){
   var aw=el('div','awrap');var sym=el('span','asym');sym.textContent='₹';
   var ain=el('input','ain');ain.type='number';ain.placeholder='0';ain.min='0';ain.step='any';ain.value=S.fa;
   ain.addEventListener('input',function(e){S.fa=e.target.value;});
+  ain.addEventListener('change',function(e){S.fa=e.target.value;});
   ain.addEventListener('focus',function(e){e.target.style.borderColor=color;});
   ain.addEventListener('blur',function(e){e.target.style.borderColor='var(--border)';});
   ap(aw,sym,ain);ap(wrap,aw);
@@ -373,12 +374,15 @@ function addForm(type,successPatch){
   nin.addEventListener('input',function(e){S.fn=e.target.value;});ap(wrap,nin);
   // Save btn
   var sbtn=el('button','sbtn');
-  sbtn.style.background=S.fa&&S.fc?color:'#d1d5db';
+  sbtn.style.background=color;
   sbtn.textContent=isEdit?'Update Entry':'Save Expense';
   sbtn.addEventListener('click',function(){
-    if(!S.fa||!S.fc)return;
-    var data={type:type,amount:parseFloat(S.fa),category:S.fc,date:S.fd,note:S.fn.trim()};
-    if(isFood&&S.fm)data.meal=S.fm;
+    var curAmt=ain.value||S.fa;
+    var curCat=S.fc;
+    if(!curAmt){alert('Please enter an amount.');ain.focus();return;}
+    if(!curCat){alert('Please select a category.');return;}
+    var data={type:type,amount:parseFloat(curAmt),category:curCat,date:din.value||S.fd,note:nin.value.trim()};
+    if(FOOD.indexOf(curCat)!==-1&&S.fm)data.meal=S.fm;
     if(isEdit)saveExp(S.expenses.map(function(x){return x.id===S.editId?Object.assign({},data,{id:S.editId}):x;}));
     else saveExp([Object.assign({},data,{id:Date.now()})].concat(S.expenses));
     sbtn.classList.add('saved');
@@ -473,27 +477,37 @@ function renderRoom(){
   if(S.rv==='add'){ap(wrap,addForm('room',{rv:'list'}));return wrap;}
   if(S.rv==='list'){ap(wrap,typeList('room'));return wrap;}
   var rT=S.expenses.filter(function(e){var d=new Date(e.date);return e.type==='room'&&d.getMonth()===S.month&&d.getFullYear()===S.year;}).reduce(function(a,b){return a+b.amount;},0);
-  var bT=Number(S.rb.total)||0,pPaid=S.partners.reduce(function(a,p){return a+(Number(p.paid)||0);},0);
-  var over=rT-bT,nP=S.partners.length+1,extra=over>0?Math.ceil(over/nP):0;
-  var ri=el('input','ri');ri.type='number';ri.placeholder='e.g. 15000';ri.value=S.rb.rent;
-  ri.addEventListener('input',function(e){saveRb(Object.assign({},S.rb,{rent:e.target.value}));render();});
-  var ti=el('input','ri');ti.type='number';ti.placeholder='e.g. 20000';ti.value=S.rb.total;
-  ti.addEventListener('input',function(e){saveRb(Object.assign({},S.rb,{total:e.target.value}));render();});
-  var bg=el('div','',{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'9px',marginBottom:'12px'});
-  var r1=el('div'),rl1=el('div','',{fontSize:'11px',color:'var(--txt2)',marginBottom:'4px'});rl1.textContent='Rent (₹)';ap(r1,rl1,ri);
-  var r2=el('div'),rl2=el('div','',{fontSize:'11px',color:'var(--txt2)',marginBottom:'4px'});rl2.textContent='Total Budget (₹)';ap(r2,rl2,ti);
-  ap(bg,r1,r2);
-  var bc=el('div','card');ap(bc,ap(el('div','sec-lbl'),'Monthly Budget'),bg);
+  // Budget = sum of all partners paid amounts
+  var bT=S.partners.reduce(function(a,p){return a+(Number(p.paid)||0);},0);
+  var nP=S.partners.length;
+  var over=rT-bT;
+  // Budget card - show budget = sum of partners, used = room entries
+  var bc=el('div','card');
+  var bslbl=el('div','sec-lbl');bslbl.textContent='Room Budget';ap(bc,bslbl);
+  // Budget summary row
+  var bsumrow=el('div','',{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'8px',marginBottom:'12px'});
+  var bItems=[['Total Budget',fmt(bT),'#0ea5e9'],['Amount Used',fmt(rT),rT>bT?'#ef4444':'#10b981'],['Remaining',fmt(Math.max(0,bT-rT)),bT-rT<0?'#ef4444':'#10b981']];
+  bItems.forEach(function(it){
+    var bib=el('div','',{background:'var(--inp)',borderRadius:'10px',padding:'9px 8px',textAlign:'center',border:'1.5px solid var(--border)'});
+    var bibl=el('div','',{fontSize:'9px',textTransform:'uppercase',letterSpacing:'.06em',color:'var(--txt3)',fontWeight:'700',marginBottom:'4px'});bibl.textContent=it[0];
+    var biva=el('div','',{fontSize:'13px',fontWeight:'800',color:it[2]});biva.textContent=it[1];
+    ap(bib,bibl,biva);ap(bsumrow,bib);
+  });
+  ap(bc,bsumrow);
   if(bT>0){
     var pct=Math.min(Math.round((rT/bT)*100),100);
     var barC=rT>bT?'#ef4444':rT>bT*0.85?'#f59e0b':TC.room;
-    var brow=el('div','',{display:'flex',justifyContent:'space-between',fontSize:'12px',marginBottom:'6px'});
-    var bl=el('span','',{color:'var(--txt2)'});bl.textContent='Used '+pct+'%';
-    var bv=el('b','',{color:rT>bT?'#ef4444':'var(--txt)'});bv.textContent=fmt(rT)+' / '+fmt(bT);
-    ap(brow,bl,bv);ap(bc,brow,pb(rT,bT,barC,10));
+    var brow2=el('div','',{display:'flex',justifyContent:'space-between',fontSize:'12px',marginBottom:'6px'});
+    var bl2=el('span','',{color:'var(--txt2)'}); bl2.textContent='Used '+pct+'%';
+    var bv2=el('b','',{color:rT>bT?'#ef4444':'var(--txt)'}); bv2.textContent=fmt(rT)+' / '+fmt(bT);
+    ap(brow2,bl2,bv2); ap(bc,brow2,pb(rT,bT,barC,10));
     var bmsg=el('div',rT>bT?'budget-over':rT>bT*0.85?'budget-warn':'budget-ok');
     bmsg.textContent=rT>bT?'🚨 Over budget by '+fmt(rT-bT):rT>bT*0.85?'⚠️ Almost over! Remaining: '+fmt(bT-rT):'✅ Remaining: '+fmt(bT-rT);
     ap(bc,bmsg);
+  } else {
+    var nobudget=el('div','',{fontSize:'12px',color:'var(--txt3)',textAlign:'center',padding:'8px 0'});
+    nobudget.textContent='Add room partners below to set budget';
+    ap(bc,nobudget);
   }
   ap(wrap,bc);
   var plist=el('div');
@@ -517,16 +531,59 @@ function renderRoom(){
   var addpbtn=el('button','addpbtn');addpbtn.textContent='+ Add';
   addpbtn.addEventListener('click',function(){if(!newPN.trim())return;savePrt(S.partners.concat([{id:Date.now(),name:newPN.trim(),paid:''}]));newPN='';addpin.value='';rndP();});
   var pc=el('div','card');ap(pc,ap(el('div','sec-lbl'),'Room Partners'),plist,ap(el('div','addprow'),addpin,addpbtn));ap(wrap,pc);
-  var sc=el('div','splitcard');ap(sc,ap(el('div','sec-lbl'),'Split Summary'));
-  [['Total Room Spend',fmt(rT),'var(--txt)'],['Partners Paid',fmt(pPaid),'#10b981'],['Your Net Cost',fmt(Math.max(0,rT-pPaid)),'#0ea5e9']].forEach(function(it){
-    var row=el('div','srow');
-    var rl=el('span','',{fontSize:'13px',color:'var(--txt2)'});rl.textContent=it[0];
-    var rv=el('span','',{fontSize:'14px',fontWeight:'800',color:it[2]});rv.textContent=it[1];
-    ap(row,rl,rv);ap(sc,row);
-  });
-  if(over>0&&bT>0){var oc=el('div','overcard');ap(oc,ap(el('div','',{fontWeight:'800',color:'#dc2626',marginBottom:'4px'}),'Over Budget — Extra Split'),ap(el('div','',{fontSize:'11px',color:'#9aa0ad',marginBottom:'5px'}),fmt(over)+' ÷ '+nP+' people'),ap(el('div','',{fontSize:'19px',fontWeight:'900',color:'#dc2626'}),'Each pays: '+fmt(extra)));ap(sc,oc);}
-  if(over<=0&&bT>0&&rT>0){var okc=el('div','okcard');ap(okc,ap(el('div','',{fontWeight:'800',color:'#16a34a'}),'✅ Within budget!'),ap(el('div','',{fontSize:'11px',color:'#9aa0ad',marginTop:'3px'}),'Savings: '+fmt(bT-rT)));ap(sc,okc);}
-  ap(wrap,sc);return wrap;
+  // Smart per-partner settlement
+  var pcard2=el('div','card');
+  ap(pcard2,ap(el('div','sec-lbl'),'Settlement — Who Pays What'));
+  if(S.partners.length===0){
+    var nop=el('div','',{fontSize:'12px',color:'var(--txt3)',padding:'8px 0',textAlign:'center'});nop.textContent='Add partners below to see settlement';ap(pcard2,nop);
+  } else if(rT===0){
+    var noe=el('div','',{fontSize:'12px',color:'var(--txt3)',padding:'8px 0',textAlign:'center'});noe.textContent='Add room entries to see settlement';ap(pcard2,noe);
+  } else {
+    // Fair share per person = total used / num partners
+    var fairShare=rT/nP;
+    // For each partner: they paid X, fair share is Y
+    // net = paid - fairShare
+    // if net > 0: they get refund of net
+    // if net < 0: they need to pay abs(net) more
+    S.partners.forEach(function(p){
+      var paid=Number(p.paid)||0;
+      var net=paid-fairShare; // positive = overpaid (get refund), negative = underpaid (pay more)
+      var prow2=el('div','',{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 0',borderBottom:'1px solid var(--border)'});
+      var pleft=el('div');
+      var pname=el('div','',{fontSize:'13px',fontWeight:'700',color:'var(--txt)',marginBottom:'2px'});pname.textContent=p.name||'Partner';
+      var ppaid=el('div','',{fontSize:'11px',color:'var(--txt3)'});ppaid.textContent='Paid: '+fmt(paid)+' | Fair share: '+fmt(Math.round(fairShare));
+      ap(pleft,pname,ppaid);
+      var pright=el('div','',{textAlign:'right'});
+      if(net>0.5){
+        // Overpaid - get refund
+        var pamt=el('div','',{fontSize:'13px',fontWeight:'800',color:'#16a34a'});pamt.textContent='↩ Return '+fmt(Math.round(net));
+        var pstatus=el('div','',{fontSize:'10px',color:'#16a34a',marginTop:'1px'});pstatus.textContent='Overpaid — refund this';
+        ap(pright,pamt,pstatus);
+      } else if(net<-0.5){
+        // Underpaid - needs to pay more
+        var pamt=el('div','',{fontSize:'13px',fontWeight:'800',color:'#ef4444'});pamt.textContent='↗ Pay '+fmt(Math.round(Math.abs(net)));
+        var pstatus=el('div','',{fontSize:'10px',color:'#ef4444',marginTop:'1px'});pstatus.textContent='Owes this amount';
+        ap(pright,pamt,pstatus);
+      } else {
+        var pamt=el('div','',{fontSize:'13px',fontWeight:'800',color:'#6b7280'});pamt.textContent='✓ Settled';
+        ap(pright,pamt);
+      }
+      ap(prow2,pleft,pright);ap(pcard2,prow2);
+    });
+    // Summary box
+    var sumbox=el('div','',{background:over>0?'#fef2f2':'#f0fdf4',border:'1.5px solid '+(over>0?'#fca5a5':'#86efac'),borderRadius:'10px',padding:'10px 12px',marginTop:'10px'});
+    if(over>0){
+      var st1=el('div','',{fontWeight:'800',color:'#dc2626',marginBottom:'3px'});st1.textContent='🚨 Over by '+fmt(Math.round(over))+' ('+fmt(Math.round(over/nP))+' extra per person)';
+      var st2=el('div','',{fontSize:'11px',color:'#9aa0ad'});st2.textContent='Fair share per person: '+fmt(Math.round(fairShare));
+      ap(sumbox,st1,st2);
+    } else if(bT>rT){
+      var st1=el('div','',{fontWeight:'800',color:'#16a34a',marginBottom:'3px'});st1.textContent='✅ Under budget by '+fmt(Math.round(bT-rT));
+      var st2=el('div','',{fontSize:'11px',color:'#9aa0ad'});st2.textContent='Fair share per person: '+fmt(Math.round(fairShare))+' | Total used: '+fmt(rT);
+      ap(sumbox,st1,st2);
+    }
+    ap(pcard2,sumbox);
+  }
+  ap(wrap,pcard2);return wrap;
 }
 
 function renderInsights(){
