@@ -775,7 +775,7 @@ function renderInsights(){
   var oLMTD=S.expenses.filter(function(e){var d=new Date(e.date);return d.getMonth()===lmoM&&d.getFullYear()===lmoY;}).reduce(function(a,b){return a+b.amount;},0);
   var oSpendMTD=fil.filter(function(e){return e.type!=='investment';}).reduce(function(a,b){return a+b.amount;},0);
   var oSpendLMTD=S.expenses.filter(function(e){var d=new Date(e.date);return d.getMonth()===lmoM&&d.getFullYear()===lmoY&&e.type!=='investment';}).reduce(function(a,b){return a+b.amount;},0);
-  var oInvMTD=totals.investment;
+  var oInvMTD=tots.investment;
   var oInvLMTD=S.expenses.filter(function(e){var d=new Date(e.date);return d.getMonth()===lmoM&&d.getFullYear()===lmoY&&e.type==='investment';}).reduce(function(a,b){return a+b.amount;},0);
 
   var mtdCard=el('div','card');
