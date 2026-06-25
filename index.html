@@ -60,32 +60,33 @@
 
 
 
-body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
+body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;-webkit-text-size-adjust:100%}
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 input,select,button,textarea{font-family:inherit}
 #app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
 
 /* HEADER */
-.hdr{position:sticky;top:0;z-index:99;background:#fff;border-bottom:1px solid var(--border);padding:14px 16px;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+.hdr{position:sticky;top:0;z-index:99;background:#f8fafc;border-bottom:1px solid var(--border);padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));box-shadow:0 2px 12px rgba(0,0,0,0.06)}
 .hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .htitle{font-size:17px;font-weight:800;color:var(--txt);letter-spacing:-0.3px}
 .hright{display:flex;gap:6px}
 .sel{background:var(--inp);color:var(--txt);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-size:12px;outline:none;font-weight:600}
-.sumrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sumrow{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
 .scard{border-radius:10px;padding:8px 6px;text-align:center;transition:transform .15s}
+.sumrow .scard{background:#fff}
 .slbl{font-size:8px;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);font-weight:700;margin-bottom:2px}
 .samt{font-size:12px;font-weight:800;margin-top:1px;margin-bottom:1px}
 
 /* MAIN */
-main{flex:1;padding:14px 14px 90px}
+main{flex:1;padding:14px 14px calc(90px + env(safe-area-inset-bottom))}
 
 /* BOTTOM NAV */
 .bnav{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;z-index:99}
-.bnav-in{width:100%;max-width:480px;background:#fff;border-top:1px solid var(--border);box-shadow:0 -4px 20px rgba(0,0,0,0.08)}
+.bnav-in{width:100%;max-width:480px;background:#fff;border-top:1px solid var(--border);box-shadow:0 -4px 20px rgba(0,0,0,0.08);padding-bottom:env(safe-area-inset-bottom)}
 .navrow{display:flex;height:62px;align-items:center}
 .nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;cursor:pointer;height:100%;position:relative;transition:color .15s}
 .nb.on::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:28px;height:2.5px;border-radius:0 0 3px 3px;background:currentColor}
-.ni{font-size:18px;line-height:1}
+.ni{font-size:18px;line-height:1;letter-spacing:1px}
 .nl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
 
 /* FAB */
@@ -191,6 +192,25 @@ main{flex:1;padding:14px 14px 90px}
 .donut-legend{display:flex;flex-direction:column;gap:7px;flex:1}
 .legend-item{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--txt)}
 .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* SWIPE TO DELETE */
+.ei-wrap{position:relative;margin-bottom:8px;overflow:hidden;border-radius:14px}
+.ei-del-bg{position:absolute;right:0;top:0;bottom:0;width:80px;background:#ef4444;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;border-radius:0 14px 14px 0;opacity:0;transition:opacity .15s}
+.ei{margin-bottom:0;transition:transform .2s ease;touch-action:pan-y;user-select:none}
+
+/* BUDGET CATEGORY */
+.bcat-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.bcat-inp{flex:1;background:var(--inp);border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--txt);outline:none;font-family:inherit;text-align:right}
+.bcat-inp:focus{border-color:var(--pri)}
+
+/* EMI TRACKER */
+.emi-card{background:linear-gradient(135deg,#eff6ff,#f5f3ff);border:1.5px solid #c7d2fe;border-radius:14px;padding:14px;margin-bottom:10px}
+.emi-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(99,102,241,0.15)}
+.emi-row:last-child{border:none}
+
+/* RECURRING */
+.rec-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px}
+.rec-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#eff6ff;color:#6366f1}
 </style>
 </head>
 <body>
@@ -211,17 +231,29 @@ var CATS={
   investment:[{id:'mutual_fund',l:'Mutual Fund/SIP',i:'📈'},{id:'stocks',l:'Stocks',i:'📊'},{id:'etf',l:'ETF',i:'🌐'},{id:'fd',l:'Fixed Deposit',i:'🏦'},{id:'ppf',l:'PPF/NPS',i:'🛡️'},{id:'gold',l:'Gold/SGB',i:'🥇'},{id:'inv_other',l:'Other',i:'💼'}]
 };
 var ALL_CATS=CATS.personal.concat(CATS.room,CATS.investment);
-function gc(id){return ALL_CATS.find(function(c){return c.id===id;})||{id:id,l:id,i:'💸'};}
+function getAllCats(){
+  var custom=S&&S.customCats?S.customCats:{personal:[],room:[],investment:[]};
+  return ALL_CATS.concat(custom.personal||[]).concat(custom.room||[]).concat(custom.investment||[]);
+}
+function gc(id){return getAllCats().find(function(c){return c.id===id;})||{id:id,l:id,i:'💸'};}
 function fmt(n){return new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(n||0);}
 function fmtS(n){if(n>=100000)return '₹'+(n/100000).toFixed(1)+'L';if(n>=1000)return '₹'+(n/1000).toFixed(1)+'K';return fmt(n);}
 
 var S={
   expenses:gls('exp',[]),rb:gls('rb',{rent:'',total:''}),partners:gls('prt',[]),
+  budgets:gls('budgets',{}),
+  emis:gls('emis',[]),
+  recurring:gls('recurring',[]),
+  customCats:gls('customCats',null)||{personal:[],room:[],investment:[]},
   editId:null,tab:'personal',month:new Date().getMonth(),year:new Date().getFullYear(),
   pv:'list',iv:'list',rv:'budget',insv:'overview',
-  showModal:false,modalType:'personal',lcFilter:'1M',
+  showModal:false,modalType:'personal',lcFilter:'1M',showEMIModal:false,showRecModal:false,
   fa:'',fc:'',fm:'',fn:'',fd:new Date().toISOString().split('T')[0]
 };
+function saveBudgets(v){S.budgets=v;sls('budgets',v);}
+function saveEmis(v){S.emis=v;sls('emis',v);}
+function saveRecurring(v){S.recurring=v;sls('recurring',v);}
+function saveCustomCats(v){S.customCats=v;sls('customCats',v);}
 function ss(p){Object.keys(p).forEach(function(k){S[k]=p[k];});render();}
 function saveExp(v){S.expenses=v;sls('exp',v);}
 function saveRb(v){S.rb=v;sls('rb',v);}
@@ -380,7 +412,16 @@ function renderHeader(){
   var top=el('div','hdr-top');
   var title=el('span','htitle');title.textContent='💰 Expense Tracker';
   var right=el('div','hright');
-  ap(right,ms,ys);ap(top,title,right);
+  // 3-line hamburger More button
+  var moreBtn=el('button','',{fontFamily:'inherit'});
+  moreBtn.style.cssText='background:var(--inp);border:1.5px solid var(--border);border-radius:10px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-direction:column;gap:3px;flex-shrink:0;padding:8px 7px;box-sizing:border-box';
+  for(var di=0;di<3;di++){
+    var dl=el('span','',{display:'block',height:'2px',borderRadius:'2px',background:'var(--txt2)'});
+    dl.style.width=di===1?'10px':'14px';
+    moreBtn.appendChild(dl);
+  }
+  moreBtn.addEventListener('click',function(){ss({tab:'more'});});
+  ap(right,ms,ys,moreBtn);ap(top,title,right);
   // MTD & LMTD per type
   var lm=new Date(cy,S.month-1,1);
   var lmMonth=lm.getMonth(),lmYear=lm.getFullYear();
@@ -388,42 +429,64 @@ function renderHeader(){
   function lmtd(type){return S.expenses.filter(function(e){var d=new Date(e.date);return e.type===type&&d.getMonth()===lmMonth&&d.getFullYear()===lmYear;}).reduce(function(a,b){return a+b.amount;},0);}
 
   var sumrow=el('div','sumrow');
+
+  // Groww style — divider grid, big numbers, clean badges
+  sumrow.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:0;background:#e2e8f0;border-radius:12px;overflow:hidden;border:0.5px solid #e2e8f0';
+
   [
     ['personal','👤 Personal',TC.personal],
     ['room','🏠 Room',TC.room],
     ['investment','📈 Invest',TC.investment]
-  ].forEach(function(it){
+  ].forEach(function(it,idx){
     var type=it[0],color=it[2];
     var curMTD=mtd(type),curLMTD=lmtd(type);
     var diff=curMTD-curLMTD;
     var diffPct=curLMTD>0?Math.round((diff/curLMTD)*100):0;
-    var grads={
-      personal:'linear-gradient(135deg,#0ea5e9,#0284c7)',
-      room:'linear-gradient(135deg,#0ea5e9,#0284c7)',
-      investment:'linear-gradient(135deg,#10b981,#059669)'
-    };
-    var shads={
-      personal:'0 4px 14px rgba(14,165,233,0.35)',
-      room:'0 4px 14px rgba(14,165,233,0.35)',
-      investment:'0 4px 14px rgba(16,185,129,0.35)'
-    };
-    var sc=el('div','scard',{cursor:'default'});
-    sc.style.cssText='background:'+grads[type]+';border:none;box-shadow:'+shads[type]+';border-radius:10px;padding:8px 6px;text-align:center';
+
+    var sc=el('div','');
+    sc.style.cssText='background:#fff;padding:10px 6px 10px 8px;text-align:center'+(idx===1?';border-left:0.5px solid #e2e8f0;border-right:0.5px solid #e2e8f0':'');
+
     // Label
-    var sl=el('div','slbl');sl.textContent=it[1];sl.style.color='rgba(255,255,255,0.85)';
-    // MTD amount
-    var sa=el('div','samt');sa.textContent=fmt(curMTD);sa.style.color='#fff';
-    // LMTD row
-    var lmrow=el('div','',{display:'flex',justifyContent:'center',alignItems:'center',gap:'4px',marginTop:'3px'});
-    var lmtxt=el('div','',{fontSize:'9px',color:'rgba(255,255,255,0.75)',fontWeight:'600'});lmtxt.textContent='LM: '+fmt(curLMTD);
-    var badge=el('div','',{fontSize:'9px',fontWeight:'700',padding:'1px 5px',borderRadius:'4px'});
-    if(diff>0){badge.textContent='▲'+Math.abs(diffPct)+'%';badge.style.cssText='background:rgba(0,0,0,0.15);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px';}
-    else if(diff<0){badge.textContent='▼'+Math.abs(diffPct)+'%';badge.style.cssText='background:rgba(0,0,0,0.15);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px';}
-    else{badge.textContent='—';badge.style.cssText='background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px';}
-    ap(lmrow,lmtxt,badge);
-    ap(sc,sl,sa,lmrow);ap(sumrow,sc);
+    var sl=el('div','');
+    sl.style.cssText='font-size:9px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px';
+    sl.textContent=it[1];
+
+    // Big amount
+    var sa=el('div','');
+    sa.style.cssText='font-size:19px;font-weight:900;color:'+color+';line-height:1;margin-bottom:6px;letter-spacing:-0.5px';
+    sa.textContent=fmtS(curMTD);
+
+    // Badge
+    var badge=el('div','');
+    badge.style.cssText='display:inline-flex;align-items:center;gap:2px;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:700';
+    if(diff>0){
+      badge.textContent='▲ '+Math.abs(diffPct)+'%';
+      badge.style.background='#fef2f2';badge.style.color='#dc2626';
+    } else if(diff<0){
+      badge.textContent='▼ '+Math.abs(diffPct)+'%';
+      badge.style.background='#f0fdf4';badge.style.color='#16a34a';
+    } else {
+      badge.textContent='—';
+      badge.style.background='#f1f5f9';badge.style.color='#64748b';
+    }
+
+    ap(sc,sl,sa,badge);ap(sumrow,sc);
   });
-  ap(hdr,top,sumrow);return hdr;
+
+  // Total row below grid
+  var totalAmt=mtd('personal')+mtd('room')+mtd('investment');
+  var totalRow=el('div','');
+  totalRow.style.cssText='display:flex;justify-content:center;align-items:center;gap:6px;margin-top:8px;padding:0 2px';
+  var tlbl=el('span','');tlbl.style.cssText='font-size:10px;color:#94a3b8;font-weight:500';tlbl.textContent='Total this month:';
+  var tamt=el('span','');tamt.style.cssText='font-size:11px;font-weight:800;color:#1a1d23';tamt.textContent=fmt(totalAmt);
+  ap(totalRow,tlbl,tamt);
+
+  // Wrap sumrow + total in a container div
+  var sumWrap=el('div','');
+  sumWrap.style.cssText='margin-top:0';
+  ap(sumWrap,sumrow,totalRow);
+
+  ap(hdr,top,sumWrap);return hdr;
 }
 
 /* NAV */
@@ -455,8 +518,11 @@ function addForm(type,successPatch){
   var wrap=el('div');
   // Category
   ap(wrap,ap(el('div','fl'),'Category'));
+  // Merge custom cats for this type
+  var customForType=(S.customCats&&S.customCats[type])||[];
+  var allCatsForType=cats.concat(customForType);
   var cw=el('div','cwrap');
-  cats.forEach(function(c){
+  allCatsForType.forEach(function(c){
     var btn=el('button','cb'+(S.fc===c.id?' on':''));
     btn.style.cssText=S.fc===c.id?'background:'+color+';border-color:'+color:'';
     btn.textContent=c.i+' '+c.l;
@@ -556,7 +622,41 @@ function typeList(type){
     var dlbl=el('div','dlbl');dlbl.textContent=new Date(date+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',month:'short',day:'numeric'});ap(wrap,dlbl);
     grouped[date].forEach(function(e){
       var cat=gc(e.category);var mDef=e.meal?MEALS.find(function(m){return m.id===e.meal;}):null;
+      // Swipe to delete wrapper
+      var eiWrap=el('div','ei-wrap');
+      var delBg=el('div','ei-del-bg');delBg.textContent='🗑️ Delete';eiWrap.appendChild(delBg);
       var ei=el('div','ei');
+      // Swipe logic
+      (function(eid,wrap,bg,card){
+        var startX=0,startY=0,dx=0,swiping=false,threshold=70;
+        card.addEventListener('touchstart',function(ev){
+          startX=ev.touches[0].clientX;startY=ev.touches[0].clientY;dx=0;swiping=false;
+        },{passive:true});
+        card.addEventListener('touchmove',function(ev){
+          var mx=ev.touches[0].clientX-startX,my=ev.touches[0].clientY-startY;
+          if(!swiping&&Math.abs(my)>Math.abs(mx))return;
+          swiping=true;ev.preventDefault();
+          dx=Math.min(0,mx);
+          card.style.transform='translateX('+Math.max(dx,-threshold-10)+'px)';
+          bg.style.opacity=Math.min(Math.abs(dx)/threshold,1);
+        },{passive:false});
+        card.addEventListener('touchend',function(){
+          if(Math.abs(dx)>threshold){
+            card.style.transform='translateX(-100%)';
+            card.style.opacity='0';
+            setTimeout(function(){
+              if(confirm('Delete this entry?')){
+                saveExp(S.expenses.filter(function(x){return x.id!==eid;}));render();
+              } else {
+                card.style.transform='';card.style.opacity='';bg.style.opacity='0';
+              }
+            },200);
+          } else {
+            card.style.transform='';bg.style.opacity='0';
+          }
+          dx=0;
+        });
+      })(e.id,eiWrap,delBg,ei);
       // Left color bar
       var colorBar=el('div','',{width:'3px',borderRadius:'999px',background:TC[e.type],flexShrink:'0',alignSelf:'stretch',minHeight:'40px'});
       var eico=el('div','eico',{background:TC[e.type]+'18',border:'1.5px solid '+TC[e.type]+'30'});eico.textContent=cat.i;
@@ -578,7 +678,7 @@ function typeList(type){
       editb.addEventListener('click',(function(exp){return function(){ss({editId:exp.id,fc:exp.category,fa:String(exp.amount),fm:exp.meal||'',fn:exp.note||'',fd:exp.date,showModal:true,modalType:exp.type});};})(e));
       var delb=el('button','',{background:'#fef2f2',border:'none',cursor:'pointer',fontSize:'13px',padding:'3px 6px',borderRadius:'6px',color:'#dc2626'});delb.textContent='🗑️';
       delb.addEventListener('click',(function(eid){return function(){if(confirm('Delete?')){saveExp(S.expenses.filter(function(x){return x.id!==eid;}));render();}};})(e.id));
-      ap(abrow,editb,delb);ap(er,eamt,abrow);ap(ei,colorBar,eico,einfo,er);ap(wrap,ei);
+      ap(abrow,editb,delb);ap(er,eamt,abrow);ap(ei,colorBar,eico,einfo,er);eiWrap.appendChild(ei);ap(wrap,eiWrap);
     });
   });
   return wrap;
@@ -874,6 +974,31 @@ function renderInsights(){
   // EXPORT ALL
   var expAllBtn=el('button','',{padding:'6px 11px',background:'#eff6ff',border:'1.5px solid #93c5fd',color:'#2563eb',borderRadius:'9px',fontSize:'12px',fontWeight:'700',cursor:'pointer',fontFamily:'inherit'});
   expAllBtn.textContent='⬇️ Export';
+  expAllBtn.addEventListener('click',function(){
+    var allData={expenses:S.expenses,roomBudget:S.rb,partners:S.partners,exportedAt:new Date().toISOString()};
+    var blob=new Blob([JSON.stringify(allData,null,2)],{type:'application/json'});
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download='expense-tracker-backup-'+new Date().toISOString().split('T')[0]+'.json';a.click();
+  });
+  // WhatsApp share button
+  var waBtn=el('button','',{padding:'6px 11px',background:'#f0fdf4',border:'1.5px solid #86efac',color:'#16a34a',borderRadius:'9px',fontSize:'12px',fontWeight:'700',cursor:'pointer',fontFamily:'inherit'});
+  waBtn.textContent='📱 Share';
+  waBtn.addEventListener('click',function(){
+    var fil2=S.expenses.filter(function(e){var d=new Date(e.date);return d.getMonth()===S.month&&d.getFullYear()===S.year;});
+    var p2=fil2.filter(function(e){return e.type==='personal';}).reduce(function(a,b){return a+b.amount;},0);
+    var r2=fil2.filter(function(e){return e.type==='room';}).reduce(function(a,b){return a+b.amount;},0);
+    var i2=fil2.filter(function(e){return e.type==='investment';}).reduce(function(a,b){return a+b.amount;},0);
+    var total2=p2+r2+i2;
+    var lmDate=new Date(S.year,S.month-1,1);
+    var lmFil=S.expenses.filter(function(e){var d=new Date(e.date);return d.getMonth()===lmDate.getMonth()&&d.getFullYear()===lmDate.getFullYear();});
+    var lmTotal=lmFil.reduce(function(a,b){return a+b.amount;},0);
+    var diff2=total2-lmTotal;
+    var pct2=lmTotal>0?Math.round((diff2/lmTotal)*100):0;
+    var msg='💰 *Expense Summary - '+MO[S.month]+' '+S.year+'*\n\n'+'👤 Personal: *'+fmt(p2)+'*\n'+'🏠 Room: *'+fmt(r2)+'*\n'+'📈 Invested: *'+fmt(i2)+'*\n'+'-------------\n'+'💵 Total: *'+fmt(total2)+'*'+(lmTotal>0?'\n\n'+(diff2>0?'📈 Up ':'📉 Down ')+(diff2>0?'+':'-')+Math.abs(pct2)+'% vs last month':'')+'\n\n_Tracked via Expense Tracker App_';
+    var url='https://wa.me/?text='+encodeURIComponent(msg);
+    window.open(url,'_blank');
+  });
+  ap(iorow,expAllBtn,impAllBtn,waBtn,impAllInput);
   expAllBtn.addEventListener('click',function(){
     var allData={expenses:S.expenses,roomBudget:S.rb,partners:S.partners,exportedAt:new Date().toISOString()};
     var blob=new Blob([JSON.stringify(allData,null,2)],{type:'application/json'});
@@ -1460,6 +1585,410 @@ function catBreakdown(type,month,year){
   return wrap;
 }
 
+/* ══════════════════════════════════
+   MORE TAB - Budget, EMI, Recurring, Year Compare
+   ══════════════════════════════════ */
+function renderMore(){
+  var wrap=el('div');
+  var snav=el('div','snav');
+  [{id:'budget',l:'🎯 Budget'},{id:'emi',l:'💳 EMI'},{id:'recurring',l:'🔄 Recurring'},{id:'yearly',l:'📅 Yearly'},{id:'custom',l:'✏️ Categories'}].forEach(function(v){
+    var btn=el('button','snb'+(( S.moreTab||'budget')===v.id?' on':''));
+    btn.textContent=v.l;
+    btn.addEventListener('click',function(){ss({moreTab:v.id});});
+    snav.appendChild(btn);
+  });
+  ap(wrap,snav);
+  var tab=S.moreTab||'budget';
+
+  // ── BUDGET PER CATEGORY ──
+  if(tab==='budget'){
+    var bcard=el('div','card');
+    ap(bcard,ap(el('div','sec-lbl'),'🎯 Category Budgets — Monthly'));
+    var note=el('div','',{fontSize:'11px',color:'var(--txt3)',marginBottom:'12px'});
+    note.textContent='Set monthly budget per category. Track how much you have used.';
+    ap(bcard,note);
+
+    var allPersonalCats=CATS.personal;
+    var curMonthExp=S.expenses.filter(function(e){
+      var d=new Date(e.date);return d.getMonth()===S.month&&d.getFullYear()===S.year&&e.type==='personal';
+    });
+
+    allPersonalCats.forEach(function(cat){
+      var spent=curMonthExp.filter(function(e){return e.category===cat.id;}).reduce(function(a,b){return a+b.amount;},0);
+      var budget=Number(S.budgets[cat.id])||0;
+
+      var row=el('div','bcat-row');
+      var lbl=el('div','',{display:'flex',alignItems:'center',gap:'6px',flex:'1.5'});
+      ap(lbl,ap(el('span','',{fontSize:'14px'}),cat.i),ap(el('span','',{fontSize:'12px',fontWeight:'600',color:'var(--txt)'}),cat.l));
+
+      var inp=el('input','bcat-inp');
+      inp.type='number';inp.placeholder='₹ Budget';inp.value=budget||'';
+      inp.addEventListener('change',(function(cid){return function(e){
+        var nb=Object.assign({},S.budgets);
+        nb[cid]=Number(e.target.value)||0;
+        saveBudgets(nb);
+      };})(cat.id));
+
+      ap(row,lbl,inp);ap(bcard,row);
+
+      if(budget>0){
+        var pct=Math.min(Math.round((spent/budget)*100),100);
+        var barColor=spent>budget?'#ef4444':spent>budget*0.8?'#f59e0b':'#10b981';
+        var info=el('div','',{display:'flex',justifyContent:'space-between',fontSize:'10px',color:'var(--txt3)',marginBottom:'4px',marginTop:'-4px'});
+        ap(info,ap(el('span'),'Used: '+fmt(spent)),ap(el('span','',{color:barColor}),pct+'% of '+fmt(budget)));
+        ap(bcard,info,pb(spent,budget,barColor,6,false));
+        ap(bcard,el('div','',{marginBottom:'8px'}));
+      }
+    });
+    ap(wrap,bcard);
+
+    // Budget summary card
+    var hasBudgets=Object.keys(S.budgets).filter(function(k){return S.budgets[k]>0;});
+    if(hasBudgets.length>0){
+      var totalBudget=hasBudgets.reduce(function(a,k){return a+(Number(S.budgets[k])||0);},0);
+      var totalSpent=curMonthExp.reduce(function(a,b){return a+b.amount;},0);
+      var sumCard=el('div','card');
+      ap(sumCard,ap(el('div','sec-lbl'),'Budget Summary'));
+      var grid=el('div','',{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'8px'});
+      [['Total Budget',fmt(totalBudget),'#6366f1'],['Spent',fmt(totalSpent),totalSpent>totalBudget?'#ef4444':'#0ea5e9'],['Remaining',fmt(Math.max(0,totalBudget-totalSpent)),'#10b981']].forEach(function(it){
+        var sb=el('div','',{background:'var(--inp)',borderRadius:'10px',padding:'9px 8px',textAlign:'center',border:'1.5px solid var(--border)'});
+        ap(sb,ap(el('div','',{fontSize:'9px',textTransform:'uppercase',color:'var(--txt3)',fontWeight:'700',marginBottom:'3px'}),it[0]));
+        ap(sb,ap(el('div','',{fontSize:'13px',fontWeight:'800',color:it[2]}),it[1]));
+        ap(grid,sb);
+      });
+      ap(sumCard,grid);ap(wrap,sumCard);
+    }
+  }
+
+  // ── EMI TRACKER ──
+  else if(tab==='emi'){
+    // Add EMI button
+    var emiHdr=el('div','',{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'});
+    ap(emiHdr,ap(el('div','',{fontSize:'16px',fontWeight:'800',color:'var(--txt)'}),'💳 EMI Tracker'));
+    var addEmiBt=el('button','',{fontFamily:'inherit'});
+    addEmiBt.style.cssText='background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer';
+    addEmiBt.textContent='+ Add EMI';
+    addEmiBt.addEventListener('click',function(){ss({showEMIModal:true});});
+    ap(emiHdr,addEmiBt);ap(wrap,emiHdr);
+
+    // EMI Modal
+    if(S.showEMIModal){
+      var ov2=el('div','overlay');
+      ov2.addEventListener('click',function(e){if(e.target===ov2)ss({showEMIModal:false});});
+      var mod2=el('div','modal');
+      ap(mod2,el('div','modal-handle'));
+      ap(mod2,ap(el('div','',{fontSize:'16px',fontWeight:'800',marginBottom:'16px'}),'Add EMI / Loan'));
+
+      var fields=[
+        {l:'Loan Name',ph:'e.g. Car Loan, Home Loan',id:'ename',t:'text'},
+        {l:'Total Amount (₹)',ph:'e.g. 500000',id:'etotal',t:'number'},
+        {l:'EMI Amount (₹)',ph:'e.g. 15000',id:'eamt',t:'number'},
+        {l:'Months Remaining',ph:'e.g. 24',id:'emonths',t:'number'},
+        {l:'Next Due Date',ph:'',id:'edate',t:'date'},
+      ];
+      var inputs={};
+      fields.forEach(function(f){
+        ap(mod2,ap(el('div','fl'),f.l));
+        var inp=el('input','tin');inp.type=f.t;inp.placeholder=f.ph;
+        if(f.t==='date')inp.value=new Date().toISOString().split('T')[0];
+        inputs[f.id]=inp;ap(mod2,inp);
+      });
+
+      var saveEmiBt=el('button','sbtn');saveEmiBt.style.background='#6366f1';saveEmiBt.textContent='Save EMI';
+      saveEmiBt.addEventListener('click',function(){
+        var nm=inputs.ename.value.trim();var amt=inputs.eamt.value;var months=inputs.emonths.value;
+        if(!nm||!amt){alert('Enter name and EMI amount');return;}
+        var newEmi={id:Date.now(),name:nm,total:Number(inputs.etotal.value)||0,emi:Number(amt),monthsLeft:Number(months)||0,dueDate:inputs.edate.value,active:true};
+        saveEmis(S.emis.concat([newEmi]));
+        ss({showEMIModal:false});
+      });
+      ap(mod2,saveEmiBt);ap(ov2,mod2);ap(wrap,ov2);
+    }
+
+    if(S.emis.length===0){
+      var emp3=el('div','card',{textAlign:'center',padding:'32px 16px',color:'var(--txt3)'});
+      ap(emp3,ap(el('div','',{fontSize:'36px',marginBottom:'8px'}),'💳'),ap(el('div','',{fontSize:'14px',fontWeight:'700',color:'var(--txt2)',marginBottom:'4px'}),'No EMIs tracked'),ap(el('div','',{fontSize:'12px'}),'Add your loans and EMIs to track them'));
+      ap(wrap,emp3);
+    } else {
+      var totalEMI=0,totalLeft=0;
+      S.emis.forEach(function(emi){
+        if(!emi.active)return;
+        totalEMI+=emi.emi;totalLeft+=emi.emi*emi.monthsLeft;
+        var ec=el('div','emi-card');
+        var er=el('div','',{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'10px'});
+        var el2=el('div');
+        ap(el2,ap(el('div','',{fontSize:'14px',fontWeight:'800',color:'#4f46e5'}),emi.name));
+        ap(el2,ap(el('div','',{fontSize:'11px',color:'var(--txt3)',marginTop:'2px'}),'Due: '+emi.dueDate+' | '+emi.monthsLeft+' months left'));
+        var er2=el('div','',{textAlign:'right'});
+        ap(er2,ap(el('div','',{fontSize:'18px',fontWeight:'900',color:'#6366f1'}),fmt(emi.emi)+'/mo'));
+        ap(er2,ap(el('div','',{fontSize:'11px',color:'var(--txt3)',marginTop:'2px'}),'Total left: '+fmt(emi.emi*emi.monthsLeft)));
+        ap(er,el2,er2);ap(ec,er);
+        // Progress
+        if(emi.total>0){
+          var paid=emi.total-(emi.emi*emi.monthsLeft);
+          var ppct=Math.min(Math.round((paid/emi.total)*100),100);
+          var prow2=el('div','',{display:'flex',justifyContent:'space-between',fontSize:'10px',color:'var(--txt3)',marginBottom:'4px'});
+          ap(prow2,ap(el('span'),'Paid: '+fmt(Math.max(0,paid))+' ('+ppct+'%)'),ap(el('span'),'Remaining: '+fmt(emi.emi*emi.monthsLeft)));
+          ap(ec,prow2,pb(Math.max(0,paid),emi.total,'#6366f1',8,false));
+        }
+        // Delete btn
+        var delRow=el('div','',{display:'flex',justifyContent:'flex-end',marginTop:'10px'});
+        var delE=el('button','',{fontFamily:'inherit'});
+        delE.style.cssText='background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;border-radius:7px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600';
+        delE.textContent='Remove';
+        delE.addEventListener('click',(function(eid){return function(){saveEmis(S.emis.filter(function(x){return x.id!==eid;}));render();};})(emi.id));
+        ap(delRow,delE);ap(ec,delRow);ap(wrap,ec);
+      });
+      // Summary
+      var emiSum=el('div','card');
+      ap(emiSum,ap(el('div','sec-lbl'),'EMI Summary'));
+      var esiGrid=el('div','',{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px'});
+      [['Monthly EMI',fmt(totalEMI),'#6366f1'],['Total Outstanding',fmt(totalLeft),'#ef4444']].forEach(function(it){
+        var sb=el('div','',{background:'var(--inp)',borderRadius:'10px',padding:'10px 8px',textAlign:'center',border:'1.5px solid var(--border)'});
+        ap(sb,ap(el('div','',{fontSize:'9px',textTransform:'uppercase',color:'var(--txt3)',fontWeight:'700',marginBottom:'3px'}),it[0]));
+        ap(sb,ap(el('div','',{fontSize:'14px',fontWeight:'800',color:it[1]}),it[1]));
+        ap(esiGrid,sb);
+      });
+      ap(emiSum,esiGrid);ap(wrap,emiSum);
+    }
+  }
+
+  // ── RECURRING EXPENSES ──
+  else if(tab==='recurring'){
+    var recHdr=el('div','',{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'});
+    ap(recHdr,ap(el('div','',{fontSize:'16px',fontWeight:'800',color:'var(--txt)'}),'🔄 Recurring'));
+    var addRecBt=el('button','',{fontFamily:'inherit'});
+    addRecBt.style.cssText='background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer';
+    addRecBt.textContent='+ Add';
+    addRecBt.addEventListener('click',function(){ss({showRecModal:true});});
+    ap(recHdr,addRecBt);ap(wrap,recHdr);
+
+    if(S.showRecModal){
+      var ov3=el('div','overlay');
+      ov3.addEventListener('click',function(e){if(e.target===ov3)ss({showRecModal:false});});
+      var mod3=el('div','modal');
+      ap(mod3,el('div','modal-handle'));
+      ap(mod3,ap(el('div','',{fontSize:'16px',fontWeight:'800',marginBottom:'16px'}),'Add Recurring Expense'));
+      ap(mod3,ap(el('div','fl'),'Name'));
+      var rName=el('input','tin');rName.placeholder='e.g. Netflix, Gym, SIP';ap(mod3,rName);
+      ap(mod3,ap(el('div','fl'),'Amount (₹)'));
+      var rAmt=el('input','tin');rAmt.type='number';rAmt.placeholder='Monthly amount';ap(mod3,rAmt);
+      ap(mod3,ap(el('div','fl'),'Category'));
+      var rCat=el('select','tin',{marginBottom:'14px'});
+      CATS.personal.forEach(function(c){var o=document.createElement('option');o.value=c.id;o.textContent=c.i+' '+c.l;rCat.appendChild(o);});
+      ap(mod3,rCat);
+      ap(mod3,ap(el('div','fl'),'Due Day of Month'));
+      var rDay=el('input','tin');rDay.type='number';rDay.min='1';rDay.max='31';rDay.placeholder='e.g. 5';ap(mod3,rDay);
+      var saveRecBt=el('button','sbtn');saveRecBt.style.background='#10b981';saveRecBt.textContent='Save';
+      saveRecBt.addEventListener('click',function(){
+        var nm=rName.value.trim();var amt=rAmt.value;
+        if(!nm||!amt){alert('Enter name and amount');return;}
+        var rec={id:Date.now(),name:nm,amount:Number(amt),category:rCat.value,day:Number(rDay.value)||1,active:true};
+        saveRecurring(S.recurring.concat([rec]));
+        ss({showRecModal:false});
+      });
+      ap(mod3,saveRecBt);ap(ov3,mod3);ap(wrap,ov3);
+    }
+
+    // Check which recurring are due this month
+    var today=new Date().getDate();
+    if(S.recurring.length===0){
+      var emp4=el('div','card',{textAlign:'center',padding:'32px 16px',color:'var(--txt3)'});
+      ap(emp4,ap(el('div','',{fontSize:'36px',marginBottom:'8px'}),'🔄'),ap(el('div','',{fontSize:'14px',fontWeight:'700',color:'var(--txt2)',marginBottom:'4px'}),'No recurring expenses'),ap(el('div','',{fontSize:'12px'}),'Add subscriptions, rent, SIPs etc.'));
+      ap(wrap,emp4);
+    } else {
+      S.recurring.forEach(function(rec){
+        var isDue=today>=rec.day;
+        // Check if already added this month
+        var alreadyAdded=S.expenses.some(function(e){
+          var d=new Date(e.date);
+          return e.category===rec.category&&Math.abs(e.amount-rec.amount)<1&&d.getMonth()===S.month&&d.getFullYear()===S.year;
+        });
+        var rc=el('div','rec-card');
+        var rr=el('div','',{display:'flex',alignItems:'center',gap:'10px'});
+        var rico=el('div','',{width:'36px',height:'36px',borderRadius:'50%',background:'#eff6ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px',flexShrink:'0'});
+        rico.textContent=gc(rec.category).i;
+        var rinfo=el('div','',{flex:'1'});
+        ap(rinfo,ap(el('div','',{fontSize:'13px',fontWeight:'700',color:'var(--txt)'}),rec.name));
+        ap(rinfo,ap(el('div','',{fontSize:'11px',color:'var(--txt3)',marginTop:'2px'}),'Due on '+rec.day+'th every month · '+gc(rec.category).l));
+        var rright=el('div','',{textAlign:'right'});
+        ap(rright,ap(el('div','',{fontSize:'15px',fontWeight:'800',color:'#6366f1'}),fmt(rec.amount)));
+        var statusBadge=el('div','',{fontSize:'10px',fontWeight:'700',padding:'2px 7px',borderRadius:'10px',marginTop:'3px',display:'inline-block'});
+        if(alreadyAdded){statusBadge.textContent='✓ Added';statusBadge.style.cssText='background:#f0fdf4;color:#16a34a;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px';}
+        else if(isDue){statusBadge.textContent='⚠️ Due!';statusBadge.style.cssText='background:#fef2f2;color:#dc2626;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px';}
+        else{statusBadge.textContent='Upcoming';statusBadge.style.cssText='background:#eff6ff;color:#6366f1;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px';}
+        ap(rright,statusBadge);ap(rr,rico,rinfo,rright);ap(rc,rr);
+        // Quick add button
+        if(!alreadyAdded&&isDue){
+          var qaBtn=el('button','',{fontFamily:'inherit'});
+          qaBtn.style.cssText='width:100%;margin-top:10px;padding:8px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer';
+          qaBtn.textContent='+ Add to This Month';
+          qaBtn.addEventListener('click',(function(r){return function(){
+            var today2=new Date();
+            var ds=today2.getFullYear()+'-'+String(today2.getMonth()+1).padStart(2,'0')+'-'+String(r.day).padStart(2,'0');
+            saveExp([{id:Date.now(),type:'personal',amount:r.amount,category:r.category,date:ds,note:r.name+' (recurring)'}].concat(S.expenses));
+            render();
+          };})(rec));
+          ap(rc,qaBtn);
+        }
+        // Delete
+        var delRecBt=el('button','',{fontFamily:'inherit'});
+        delRecBt.style.cssText='margin-top:8px;padding:4px 10px;background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;border-radius:7px;font-size:11px;cursor:pointer;font-weight:600';
+        delRecBt.textContent='Remove';
+        delRecBt.addEventListener('click',(function(rid){return function(){saveRecurring(S.recurring.filter(function(x){return x.id!==rid;}));render();};})(rec.id));
+        ap(rc,delRecBt);ap(wrap,rc);
+      });
+      var recTotal=S.recurring.reduce(function(a,r){return a+r.amount;},0);
+      var recSum=el('div','card');
+      ap(recSum,ap(el('div','sec-lbl'),'Monthly Recurring Total'));
+      ap(recSum,ap(el('div','',{fontSize:'24px',fontWeight:'900',color:'#6366f1'}),fmt(recTotal)));
+      ap(wrap,recSum);
+    }
+  }
+
+  // ── YEAR-WISE COMPARISON ──
+  else if(tab==='yearly'){
+    var curY=S.year,prevY=curY-1;
+    var yearHdr=el('div','',{fontSize:'16px',fontWeight:'800',color:'var(--txt)',marginBottom:'12px'});
+    yearHdr.textContent='📅 '+prevY+' vs '+curY;
+    ap(wrap,yearHdr);
+
+    // Build month-wise data for both years
+    var months12=[];
+    for(var mi=0;mi<12;mi++){
+      var cy1=S.expenses.filter(function(e){var d=new Date(e.date);return d.getMonth()===mi&&d.getFullYear()===curY&&e.type!=='investment';}).reduce(function(a,b){return a+b.amount;},0);
+      var py1=S.expenses.filter(function(e){var d=new Date(e.date);return d.getMonth()===mi&&d.getFullYear()===prevY&&e.type!=='investment';}).reduce(function(a,b){return a+b.amount;},0);
+      var cy1inv=S.expenses.filter(function(e){var d=new Date(e.date);return d.getMonth()===mi&&d.getFullYear()===curY&&e.type==='investment';}).reduce(function(a,b){return a+b.amount;},0);
+      var py1inv=S.expenses.filter(function(e){var d=new Date(e.date);return d.getMonth()===mi&&d.getFullYear()===prevY&&e.type==='investment';}).reduce(function(a,b){return a+b.amount;},0);
+      months12.push({label:MO[mi],cy:cy1,py:py1,cyInv:cy1inv,pyInv:py1inv});
+    }
+
+    var curTotal=months12.reduce(function(a,m){return a+m.cy;},0);
+    var prevTotal=months12.reduce(function(a,m){return a+m.py;},0);
+    var curInv=months12.reduce(function(a,m){return a+m.cyInv;},0);
+    var prevInv=months12.reduce(function(a,m){return a+m.pyInv;},0);
+
+    // Summary cards
+    var ysum=el('div','card');
+    ap(ysum,ap(el('div','sec-lbl'),'Annual Comparison'));
+    var ygrid=el('div','',{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginBottom:'12px'});
+    [[prevY,prevTotal,prevInv,'#8b949e'],[curY,curTotal,curInv,'#0ea5e9']].forEach(function(it){
+      var sb=el('div','',{background:'var(--inp)',borderRadius:'12px',padding:'12px',border:'1.5px solid var(--border)',textAlign:'center'});
+      ap(sb,ap(el('div','',{fontSize:'11px',fontWeight:'700',color:it[3],marginBottom:'6px'}),String(it[0])));
+      ap(sb,ap(el('div','',{fontSize:'9px',color:'var(--txt3)',marginBottom:'2px'}),'SPENDING'));
+      ap(sb,ap(el('div','',{fontSize:'16px',fontWeight:'900',color:'var(--txt)',marginBottom:'8px'}),fmt(it[1])));
+      ap(sb,ap(el('div','',{fontSize:'9px',color:'var(--txt3)',marginBottom:'2px'}),'INVESTED'));
+      ap(sb,ap(el('div','',{fontSize:'14px',fontWeight:'800',color:'#10b981'}),fmt(it[2])));
+      ap(ygrid,sb);
+    });
+    ap(ysum,ygrid);
+    // Diff badge
+    var ydiff=curTotal-prevTotal,ypct=prevTotal>0?Math.round((ydiff/prevTotal)*100):0;
+    if(prevTotal>0){
+      var ybadge=el('div','',{textAlign:'center',padding:'8px',borderRadius:'10px',background:ydiff>0?'#fef2f2':'#f0fdf4',border:'1.5px solid '+(ydiff>0?'#fca5a5':'#86efac')});
+      ap(ybadge,ap(el('div','',{fontSize:'16px',fontWeight:'900',color:ydiff>0?'#dc2626':'#16a34a'}),(ydiff>0?'▲':'▼')+Math.abs(ypct)+'%'));
+      ap(ybadge,ap(el('div','',{fontSize:'11px',color:'var(--txt3)',marginTop:'2px'}),ydiff>0?'Spent '+fmt(Math.abs(ydiff))+' more in '+curY:'Saved '+fmt(Math.abs(ydiff))+' vs '+prevY));
+      ap(ysum,ybadge);
+    }
+    ap(wrap,ysum);
+
+    // Month-by-month table
+    var ytbl=el('div','card');
+    ap(ytbl,ap(el('div','sec-lbl'),'Month-by-Month'));
+    var table2=el('table','',{width:'100%',fontSize:'12px',borderCollapse:'collapse'});
+    var thead2=el('thead');var hrow2=el('tr');
+    ['Month',prevY,curY,'Δ'].forEach(function(hd,i){
+      var th=el('th','',{paddingBottom:'8px',fontWeight:'700',textAlign:i===0?'left':'right',color:'var(--txt3)',fontSize:'10px',borderBottom:'2px solid var(--border)'});
+      th.textContent=hd;ap(hrow2,th);
+    });
+    ap(thead2,hrow2);ap(table2,thead2);
+    var tbody2=el('tbody');
+    months12.forEach(function(m,i){
+      var diff2=m.cy-m.py;
+      var isCurMo=i===new Date().getMonth()&&S.year===new Date().getFullYear();
+      var tr2=el('tr','',{borderBottom:'1px solid var(--border)',background:isCurMo?'#eff6ff':'transparent'});
+      var td_m=el('td','',{padding:'7px 0',fontWeight:isCurMo?'800':'500',color:isCurMo?'#6366f1':'var(--txt2)',fontSize:'12px'});td_m.textContent=m.label;
+      var td_p=el('td','',{padding:'7px 0',textAlign:'right',color:'#8b949e',fontSize:'11px'});td_p.textContent=m.py>0?fmtS(m.py):'—';
+      var td_c=el('td','',{padding:'7px 0',textAlign:'right',color:m.cy>0?'#0ea5e9':'var(--txt3)',fontWeight:'700',fontSize:'11px'});td_c.textContent=m.cy>0?fmtS(m.cy):'—';
+      var td_d=el('td','',{padding:'7px 0',textAlign:'right',fontSize:'11px',fontWeight:'700',color:diff2>0?'#ef4444':diff2<0?'#16a34a':'var(--txt3)'});
+      td_d.textContent=diff2!==0?(diff2>0?'+':'')+fmtS(diff2):'—';
+      ap(tr2,td_m,td_p,td_c,td_d);tbody2.appendChild(tr2);
+    });
+    ap(table2,tbody2);ap(ytbl,table2);ap(wrap,ytbl);
+  }
+
+  // ── CUSTOM CATEGORIES ──
+  else if(tab==='custom'){
+    var typeLabels={personal:'👤 Personal',room:'🏠 Room',investment:'📈 Invest'};
+    var typeColors={personal:TC.personal,room:TC.room,investment:TC.investment};
+
+    ['personal','room','investment'].forEach(function(typ){
+      var typCard=el('div','card');
+      var typHdr=el('div','',{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'});
+      ap(typHdr,ap(el('div','sec-lbl',{marginBottom:'0'}),typeLabels[typ]));
+      ap(typCard,typHdr);
+
+      // Existing custom cats for this type
+      var custList=el('div');
+      function renderCustList(){
+        custList.innerHTML='';
+        var cats2=(S.customCats[typ]||[]);
+        if(!cats2.length){
+          var emp5=el('div','',{fontSize:'12px',color:'var(--txt3)',textAlign:'center',padding:'6px 0',marginBottom:'8px'});
+          emp5.textContent='No custom categories yet';ap(custList,emp5);
+        }
+        cats2.forEach(function(c){
+          var crow2=el('div','',{display:'flex',alignItems:'center',gap:'8px',padding:'8px 0',borderBottom:'1px solid var(--border)'});
+          var cico2=el('div','',{width:'32px',height:'32px',borderRadius:'8px',background:typeColors[typ]+'15',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px',flexShrink:'0'});
+          cico2.textContent=c.i;
+          var cname2=el('div','',{flex:'1',fontSize:'13px',fontWeight:'600',color:'var(--txt)'});cname2.textContent=c.l;
+          var cDel=el('button','',{fontFamily:'inherit'});
+          cDel.style.cssText='background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;border-radius:7px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600';
+          cDel.textContent='Remove';
+          cDel.addEventListener('click',(function(cid,t){return function(){
+            var nc=Object.assign({},S.customCats);
+            nc[t]=(nc[t]||[]).filter(function(x){return x.id!==cid;});
+            saveCustomCats(nc);renderCustList();
+          };})(c.id,typ));
+          ap(crow2,cico2,cname2,cDel);ap(custList,crow2);
+        });
+      }
+      renderCustList();ap(typCard,custList);
+
+      // Add new custom category
+      var addSec2=el('div','',{borderTop:'1px solid var(--border)',paddingTop:'12px',marginTop:'4px'});
+      var addLbl2=el('div','',{fontSize:'10px',fontWeight:'700',color:'var(--txt3)',marginBottom:'8px',textTransform:'uppercase',letterSpacing:'.06em'});
+      addLbl2.textContent='Add Custom Category';ap(addSec2,addLbl2);
+
+      var addRow2=el('div','',{display:'flex',gap:'7px',marginBottom:'8px'});
+      // Emoji picker
+      var emojiIn=el('input','',{fontFamily:'inherit'});
+      emojiIn.style.cssText='width:48px;background:var(--inp);border:1.5px solid var(--border);border-radius:10px;padding:9px;font-size:20px;text-align:center;outline:none;cursor:pointer';
+      emojiIn.placeholder='😊';emojiIn.maxLength=2;
+      // Name input
+      var nameIn2=el('input','addpin',{flex:'1'});nameIn2.placeholder='Category name…';
+      ap(addRow2,emojiIn,nameIn2);
+
+      var addBtn2=el('button','addpbtn');addBtn2.style.width='100%';addBtn2.textContent='+ Add Category';
+      addBtn2.addEventListener('click',(function(t,ei,ni,rl){return function(){
+        var nm2=ni.value.trim();var ico2=ei.value.trim()||'📌';
+        if(!nm2){alert('Enter category name');ni.focus();return;}
+        var newCat={id:'custom_'+Date.now(),l:nm2,i:ico2};
+        var nc2=Object.assign({},S.customCats);
+        nc2[t]=(nc2[t]||[]).concat([newCat]);
+        saveCustomCats(nc2);
+        ni.value='';ei.value='';rl();
+      };})(typ,emojiIn,nameIn2,renderCustList));
+
+      // Enter key support
+      nameIn2.addEventListener('keydown',function(e){if(e.key==='Enter')addBtn2.click();});
+      ap(addSec2,addRow2,addBtn2);ap(typCard,addSec2);ap(wrap,typCard);
+    });
+  }
+
+  return wrap;
+}
+
 function render(){barIdx=0;
   var app=document.getElementById('app');app.innerHTML='';
   app.appendChild(renderHeader());
@@ -1467,6 +1996,7 @@ function render(){barIdx=0;
   if(S.tab==='personal')main.appendChild(renderPersonal());
   else if(S.tab==='room')main.appendChild(renderRoom());
   else if(S.tab==='investment')main.appendChild(renderInvest());
+  else if(S.tab==='more')main.appendChild(renderMore());
   else main.appendChild(renderInsights());
   app.appendChild(main);app.appendChild(renderNav());
   var modal=renderModal();if(modal)app.appendChild(modal);
@@ -1476,11 +2006,14 @@ render();
 // PWA Service Worker
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js').then(function(reg){
-      console.log('SW registered');
-    }).catch(function(err){
-      console.log('SW registration failed:', err);
-    });
+    // Only register SW when served from GitHub Pages (not preview)
+    if(location.hostname !== 'www.claudeusercontent.com'){
+      navigator.serviceWorker.register('sw.js').then(function(reg){
+        console.log('SW registered');
+      }).catch(function(err){
+        console.log('SW registration failed:', err);
+      });
+    }
   });
 }
 
