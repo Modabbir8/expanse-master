@@ -4,7 +4,13 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Expenses"/>
+<meta name="theme-color" content="#0ea5e9"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<link rel="manifest" href="manifest.json"/>
+<!-- Apple Touch Icons -->
+<link rel="apple-touch-icon" href="icon-192.png"/>
 <title>Expense Tracker</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -24,6 +30,36 @@
   --red:#ef4444;
   --yellow:#f59e0b;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 input,select,button,textarea{font-family:inherit}
@@ -80,7 +116,7 @@ main{flex:1;padding:14px 14px 90px}
 
 /* MODAL */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:200;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)}
-.modal{background:#fff;border-radius:20px 20px 0 0;padding:20px 16px 30px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;animation:slideUp .28s cubic-bezier(.32,.72,0,1)}
+.modal{background:var(--surface);border-radius:20px 20px 0 0;padding:20px 16px 30px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;animation:slideUp .28s cubic-bezier(.32,.72,0,1)}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
 .modal-type-row{display:flex;gap:7px;margin-bottom:16px}
@@ -343,7 +379,8 @@ function renderHeader(){
   var hdr=el('div','hdr');
   var top=el('div','hdr-top');
   var title=el('span','htitle');title.textContent='💰 Expense Tracker';
-  var right=el('div','hright');ap(right,ms,ys);ap(top,title,right);
+  var right=el('div','hright');
+  ap(right,ms,ys);ap(top,title,right);
   // MTD & LMTD per type
   var lm=new Date(cy,S.month-1,1);
   var lmMonth=lm.getMonth(),lmYear=lm.getFullYear();
@@ -360,18 +397,29 @@ function renderHeader(){
     var curMTD=mtd(type),curLMTD=lmtd(type);
     var diff=curMTD-curLMTD;
     var diffPct=curLMTD>0?Math.round((diff/curLMTD)*100):0;
+    var grads={
+      personal:'linear-gradient(135deg,#0ea5e9,#0284c7)',
+      room:'linear-gradient(135deg,#0ea5e9,#0284c7)',
+      investment:'linear-gradient(135deg,#10b981,#059669)'
+    };
+    var shads={
+      personal:'0 4px 14px rgba(14,165,233,0.35)',
+      room:'0 4px 14px rgba(14,165,233,0.35)',
+      investment:'0 4px 14px rgba(16,185,129,0.35)'
+    };
     var sc=el('div','scard',{cursor:'default'});
+    sc.style.cssText='background:'+grads[type]+';border:none;box-shadow:'+shads[type]+';border-radius:10px;padding:8px 6px;text-align:center';
     // Label
-    var sl=el('div','slbl');sl.textContent=it[1];
+    var sl=el('div','slbl');sl.textContent=it[1];sl.style.color='rgba(255,255,255,0.85)';
     // MTD amount
-    var sa=el('div','samt');sa.textContent=fmt(curMTD);sa.style.color=color;
+    var sa=el('div','samt');sa.textContent=fmt(curMTD);sa.style.color='#fff';
     // LMTD row
     var lmrow=el('div','',{display:'flex',justifyContent:'center',alignItems:'center',gap:'4px',marginTop:'3px'});
-    var lmtxt=el('div','',{fontSize:'9px',color:'var(--txt3)',fontWeight:'600'});lmtxt.textContent='LM: '+fmt(curLMTD);
+    var lmtxt=el('div','',{fontSize:'9px',color:'rgba(255,255,255,0.75)',fontWeight:'600'});lmtxt.textContent='LM: '+fmt(curLMTD);
     var badge=el('div','',{fontSize:'9px',fontWeight:'700',padding:'1px 5px',borderRadius:'4px'});
-    if(diff>0){badge.textContent='▲'+Math.abs(diffPct)+'%';badge.style.cssText='background:#fef2f2;color:#dc2626;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px';}
-    else if(diff<0){badge.textContent='▼'+Math.abs(diffPct)+'%';badge.style.cssText='background:#f0fdf4;color:#16a34a;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px';}
-    else{badge.textContent='—';badge.style.cssText='background:var(--inp);color:var(--txt3);font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px';}
+    if(diff>0){badge.textContent='▲'+Math.abs(diffPct)+'%';badge.style.cssText='background:rgba(0,0,0,0.15);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px';}
+    else if(diff<0){badge.textContent='▼'+Math.abs(diffPct)+'%';badge.style.cssText='background:rgba(0,0,0,0.15);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px';}
+    else{badge.textContent='—';badge.style.cssText='background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px';}
     ap(lmrow,lmtxt,badge);
     ap(sc,sl,sa,lmrow);ap(sumrow,sc);
   });
@@ -629,7 +677,7 @@ function renderRoom(){
       }
       S.partners.forEach(function(p){
         var isEditing=(editingId===p.id);
-        var prow=el('div','',{background:'var(--inp)',borderRadius:'10px',padding:'10px 12px',marginBottom:'8px',border:'1.5px solid '+(isEditing?TC.room:'var(--border)')});
+        var prow=el('div','',{background:'var(--surface2)',borderRadius:'10px',padding:'10px 12px',marginBottom:'8px',border:'1.5px solid '+(isEditing?TC.room:'var(--border)')});
         if(isEditing){
           var erow=el('div','',{display:'flex',gap:'7px',alignItems:'center',marginBottom:'8px'});
           var eni=el('input','pni');eni.placeholder='Partner name';eni.value=p.name;
@@ -741,13 +789,19 @@ function renderRoom(){
 
     // Category breakdown
     var cb=catBreakdown('room',S.month,S.year);
-    if(cb)ap(wrap,cb);
+    if(cb){
+      ap(wrap,cb);
+    } else {
+      var nocb=el('div','card',{textAlign:'center',padding:'20px',color:'var(--txt3)'});
+      nocb.textContent='No room entries for '+MO[S.month]+' '+S.year;
+      ap(wrap,nocb);
+    }
 
     // Stats row - after category breakdown, before table
     var days=new Date(S.year,S.month+1,0).getDate();
     var statsrow=el('div','',{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'8px',marginBottom:'10px'});
     [['Total',fmt(rT),TC.room],['Daily Avg',fmt(Math.round(rT/days)),'#0ea5e9'],['Biggest',fmt(Math.max.apply(null,fil.map(function(e){return e.amount;}))),'#f59e0b']].forEach(function(it){
-      var sb=el('div','',{background:'#fff',borderRadius:'10px',padding:'9px 8px',textAlign:'center',border:'1.5px solid var(--border)',boxShadow:'0 1px 4px rgba(0,0,0,0.05)'});
+      var sb=el('div','',{background:'var(--surface)',borderRadius:'10px',padding:'9px 8px',textAlign:'center',border:'1.5px solid var(--border)',boxShadow:'0 1px 4px var(--shadow)'});
       ap(sb,ap(el('div','',{fontSize:'9px',textTransform:'uppercase',letterSpacing:'.06em',color:'var(--txt3)',fontWeight:'700',marginBottom:'3px'}),it[0]),ap(el('div','',{fontSize:'13px',fontWeight:'800',color:it[2]}),it[1]));
       ap(statsrow,sb);
     });
@@ -787,6 +841,22 @@ function renderRoom(){
       ap(td4,editb,delb);
       ap(tr,td1,td2,td3,td4);ap(tbody,tr);
     });
+        // Total row
+        var totalRow=el('tr','',{borderTop:'2px solid var(--border)',background:'var(--inp)'});
+        ap(totalRow,
+          ap(el('td','',{padding:'8px 4px 8px 0',fontWeight:'800',color:'var(--txt)',fontSize:'12px'}),'Total'),
+          el('td'),
+          ap(el('td','',{padding:'8px 0 8px 4px',textAlign:'right',fontWeight:'900',color:TC.room,fontSize:'14px'}),fmt(rT)),
+          el('td')
+        );
+        // Total row
+        var totalRow=el('tr','',{borderTop:'2px solid var(--border)',background:'var(--inp)'});
+        ap(totalRow,
+          ap(el('td','',{padding:'8px 4px 8px 0',fontWeight:'800',color:'var(--txt)',fontSize:'12px'}),'Total'),
+          el('td'),
+          ap(el('td','',{padding:'8px 0 8px 4px',textAlign:'right',fontWeight:'900',color:TC.room,fontSize:'14px'}),fmt(rT)),
+          el('td')
+        );
         ap(tbody,totalRow);ap(tbl,tbody);ap(insCard,tbl);
     ap(wrap,insCard);
     return wrap;
@@ -1165,7 +1235,7 @@ function renderInsights(){
       thl.textContent={personal:'👤 Personal',room:'🏠 Room',investment:'📈 Investment'}[typ];
       var tha=el('div','',{fontSize:'13px',fontWeight:'800',color:TC[typ]});tha.textContent=fmt(typTotal);
       ap(th,thl,tha);ap(tc2,th);
-      byCat.forEach(function(c,ci){
+      byCat.forEach(function(c,cidx){
         var ci=el('div','',{marginBottom:'8px'});
         var cr=el('div','',{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'4px'});
         var cl=el('span','',{fontSize:'12px',color:'var(--txt)',fontWeight:'600'});cl.textContent=c.cat.i+' '+c.cat.l;
@@ -1402,6 +1472,44 @@ function render(){barIdx=0;
   var modal=renderModal();if(modal)app.appendChild(modal);
 }
 render();
+
+// PWA Service Worker
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      console.log('SW registered');
+    }).catch(function(err){
+      console.log('SW registration failed:', err);
+    });
+  });
+}
+
+// iOS PWA install prompt
+window.addEventListener('load', function(){
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  var isStandalone = window.navigator.standalone === true;
+  if(isIOS && !isStandalone){
+    var shown = localStorage.getItem('pwa-banner');
+    if(!shown){
+      setTimeout(function(){
+        var banner = document.createElement('div');
+        banner.style.cssText = 'position:fixed;bottom:80px;left:16px;right:16px;background:#1a1d23;color:#fff;border-radius:16px;padding:14px 16px;z-index:999;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,0.3);animation:slideUp .3s ease';
+        var closeBtn = document.createElement('button');
+        closeBtn.textContent = '✕';
+        closeBtn.style.cssText = 'background:none;border:none;color:rgba(255,255,255,0.5);font-size:20px;cursor:pointer;padding:4px;flex-shrink:0';
+        closeBtn.onclick = function(){banner.remove();localStorage.setItem('pwa-banner','1');};
+        var iconEl = document.createElement('span');iconEl.textContent='📱';iconEl.style.fontSize='28px';
+        var textEl = document.createElement('div');textEl.style.flex='1';
+        var t1 = document.createElement('div');t1.style.cssText='font-weight:800;font-size:13px;margin-bottom:3px';t1.textContent='Add to Home Screen';
+        var t2 = document.createElement('div');t2.style.cssText='font-size:11px;color:rgba(255,255,255,0.7)';t2.textContent='Tap Share → Add to Home Screen for app experience';
+        textEl.appendChild(t1);textEl.appendChild(t2);
+        banner.appendChild(iconEl);banner.appendChild(textEl);banner.appendChild(closeBtn);
+        document.body.appendChild(banner);
+        setTimeout(function(){if(banner.parentNode)banner.remove();localStorage.setItem('pwa-banner','1');}, 8000);
+      }, 2000);
+    }
+  }
+});
 </script>
 </body>
 </html>
