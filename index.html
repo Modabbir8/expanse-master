@@ -189,14 +189,15 @@ main{flex:1;padding:14px 14px calc(90px + env(safe-area-inset-bottom))}
 
 /* ANALYTICS */
 .heatmap-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:8px}
-.hm-cell{aspect-ratio:1;border-radius:3px;cursor:pointer;transition:opacity .15s;position:relative}
+.hm-cell{aspect-ratio:1;border-radius:3px;cursor:pointer;transition:all .15s;position:relative;-webkit-tap-highlight-color:transparent}.hm-cell:active{transform:scale(0.9);opacity:0.8}
 .hm-day-lbl{font-size:8px;color:var(--txt3);text-align:center;font-weight:600}
 .dow-bar{height:6px;border-radius:3px;transition:width .5s ease;margin-top:4px}
 .vel-ring{position:relative;display:flex;align-items:center;justify-content:center}
 .trend-mini{height:40px;width:100%}
 .ana-tooltip{position:fixed;background:#1a1d23;color:#fff;font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;pointer-events:none;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.25);white-space:nowrap;display:none;transform:translateX(-50%)}
-.bar-hover{cursor:pointer;transition:opacity .15s}
-.bar-hover:hover{opacity:0.8}
+.bar-hover{cursor:pointer;transition:opacity .15s;-webkit-tap-highlight-color:transparent}
+.bar-hover:hover{opacity:0.7}
+.bar-hover:active{opacity:0.6}
 
 /* DONUT */
 .donut-wrap{display:flex;align-items:center;gap:16px;margin-bottom:6px}
@@ -268,24 +269,53 @@ function saveRecurring(v){S.recurring=v;sls('recurring',v);}
 function saveCustomCats(v){S.customCats=v;sls('customCats',v);}
 function saveIncome(v){S.income=v;sls('income',v);}
 
-// Global tooltip helper
+// Global tooltip - mobile friendly
 var _tt=null;
-function showTip(e,text){
-  if(!_tt){_tt=document.createElement('div');_tt.className='ana-tooltip';document.body.appendChild(_tt);}
-  _tt.textContent=text;_tt.style.display='block';
-  var x=e.clientX,y=e.clientY;
-  _tt.style.left=x+'px';_tt.style.top=(y-36)+'px';
+var _ttTimer=null;
+function getTooltip(){
+  if(!_tt){
+    _tt=document.createElement('div');
+    _tt.style.cssText='position:fixed;background:#1a1d23;color:#fff;font-size:12px;font-weight:700;padding:6px 12px;border-radius:8px;pointer-events:none;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.3);white-space:nowrap;display:none;transform:translateX(-50%);transition:opacity .15s';
+    document.body.appendChild(_tt);
+  }
+  return _tt;
 }
-function hideTip(){if(_tt)_tt.style.display='none';}
+function showTip(x,y,text){
+  var t=getTooltip();
+  t.textContent=text;
+  t.style.display='block';
+  t.style.opacity='1';
+  // Keep within screen bounds
+  var left=Math.max(60,Math.min(x,window.innerWidth-60));
+  var top=Math.max(40,y-44);
+  t.style.left=left+'px';
+  t.style.top=top+'px';
+}
+function hideTip(){
+  var t=getTooltip();
+  t.style.opacity='0';
+  setTimeout(function(){t.style.display='none';},150);
+  if(_ttTimer){clearTimeout(_ttTimer);_ttTimer=null;}
+}
 function addTip(el2,text){
-  el2.addEventListener('mouseenter',function(e){showTip(e,text);});
-  el2.addEventListener('mousemove',function(e){showTip(e,text);});
+  // Mouse events (desktop)
+  el2.addEventListener('mouseenter',function(e){showTip(e.clientX,e.clientY,text);});
+  el2.addEventListener('mousemove',function(e){showTip(e.clientX,e.clientY,text);});
   el2.addEventListener('mouseleave',hideTip);
-  el2.addEventListener('touchstart',function(e){
-    if(e.touches[0])showTip(e.touches[0],text);
-    setTimeout(hideTip,2000);
-  },{passive:true});
+  // Touch events (mobile) - show on tap
+  el2.addEventListener('click',function(e){
+    var rect=el2.getBoundingClientRect();
+    var cx=rect.left+rect.width/2;
+    var cy=rect.top;
+    showTip(cx,cy,text);
+    if(_ttTimer)clearTimeout(_ttTimer);
+    _ttTimer=setTimeout(hideTip,2500);
+    e.stopPropagation();
+  });
 }
+// Hide tooltip on scroll or tap elsewhere
+document.addEventListener('scroll',hideTip,{passive:true});
+document.addEventListener('click',hideTip);
 function ss(p){Object.keys(p).forEach(function(k){S[k]=p[k];});render();}
 function saveExp(v){S.expenses=v;sls('exp',v);}
 function saveRb(v){S.rb=v;sls('rb',v);}
