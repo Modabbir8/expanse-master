@@ -1986,7 +1986,6 @@ function renderMore(){
 
   // ── EMI TRACKER ──
   else if(tab==='emi'){
-    // Add EMI button
     var emiHdr=el('div','',{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'});
     ap(emiHdr,ap(el('div','',{fontSize:'16px',fontWeight:'800',color:'var(--txt)'}),'💳 EMI Tracker'));
     var addEmiBt=el('button','',{fontFamily:'inherit'});
@@ -2003,74 +2002,166 @@ function renderMore(){
       ap(mod2,el('div','modal-handle'));
       ap(mod2,ap(el('div','',{fontSize:'16px',fontWeight:'800',marginBottom:'16px'}),'Add EMI / Loan'));
 
-      var fields=[
-        {l:'Loan Name',ph:'e.g. Car Loan, Home Loan',id:'ename',t:'text'},
-        {l:'Total Amount (₹)',ph:'e.g. 500000',id:'etotal',t:'number'},
-        {l:'EMI Amount (₹)',ph:'e.g. 15000',id:'eamt',t:'number'},
-        {l:'Months Remaining',ph:'e.g. 24',id:'emonths',t:'number'},
-        {l:'Next Due Date',ph:'',id:'edate',t:'date'},
-      ];
-      var inputs={};
-      fields.forEach(function(f){
-        ap(mod2,ap(el('div','fl'),f.l));
-        var inp=el('input','tin');inp.type=f.t;inp.placeholder=f.ph;
-        if(f.t==='date')inp.value=new Date().toISOString().split('T')[0];
-        inputs[f.id]=inp;ap(mod2,inp);
-      });
+      // Loan Name
+      ap(mod2,ap(el('div','fl'),'Loan Name'));
+      var ename2=el('input','tin');ename2.placeholder='e.g. Car Loan, Home Loan, Personal Loan';ap(mod2,ename2);
 
-      var saveEmiBt=el('button','sbtn');saveEmiBt.style.background='#6366f1';saveEmiBt.textContent='Save EMI';
-      saveEmiBt.addEventListener('click',function(){
-        var nm=inputs.ename.value.trim();var amt=inputs.eamt.value;var months=inputs.emonths.value;
-        if(!nm||!amt){alert('Enter name and EMI amount');return;}
-        var newEmi={id:Date.now(),name:nm,total:Number(inputs.etotal.value)||0,emi:Number(amt),monthsLeft:Number(months)||0,dueDate:inputs.edate.value,active:true};
+      // EMI Amount
+      ap(mod2,ap(el('div','fl'),'Monthly EMI (₹)'));
+      var eamt2=el('input','tin');eamt2.type='number';eamt2.placeholder='e.g. 15000';ap(mod2,eamt2);
+
+      // Total Tenure
+      ap(mod2,ap(el('div','fl'),'Total Tenure (months)'));
+      var etotal2=el('input','tin');etotal2.type='number';etotal2.placeholder='e.g. 24';ap(mod2,etotal2);
+
+      // Remaining Months
+      ap(mod2,ap(el('div','fl'),'Months Remaining'));
+      var erem2=el('input','tin');erem2.type='number';erem2.placeholder='e.g. 18';ap(mod2,erem2);
+
+      // Auto-calculate hint
+      var hint=el('div','',{fontSize:'11px',color:'var(--txt3)',background:'var(--inp)',borderRadius:'8px',padding:'8px 10px',marginBottom:'14px'});
+      hint.textContent='💡 Paid months = Total - Remaining will be auto-calculated';
+      ap(mod2,hint);
+
+      // Due Date
+      ap(mod2,ap(el('div','fl'),'Next Due Date'));
+      var edate2=el('input','tin');edate2.type='date';edate2.value=new Date().toISOString().split('T')[0];ap(mod2,edate2);
+
+      var saveEmiBt2=el('button','sbtn');saveEmiBt2.style.background='#6366f1';saveEmiBt2.textContent='Save EMI';
+      saveEmiBt2.addEventListener('click',function(){
+        var nm=ename2.value.trim();
+        var amt=Number(eamt2.value)||0;
+        var total=Number(etotal2.value)||0;
+        var rem=Number(erem2.value)||0;
+        if(!nm){alert('Enter loan name');ename2.focus();return;}
+        if(!amt){alert('Enter EMI amount');eamt2.focus();return;}
+        if(!total){alert('Enter total tenure');etotal2.focus();return;}
+        if(rem>total){alert('Remaining cannot be more than total tenure');return;}
+        var newEmi={
+          id:Date.now(),name:nm,
+          emi:amt,
+          totalMonths:total,
+          monthsLeft:rem,
+          dueDate:edate2.value,
+          active:true
+        };
         saveEmis(S.emis.concat([newEmi]));
         ss({showEMIModal:false});
       });
-      ap(mod2,saveEmiBt);ap(ov2,mod2);ap(wrap,ov2);
+      ap(mod2,saveEmiBt2);ap(ov2,mod2);ap(wrap,ov2);
     }
 
     if(S.emis.length===0){
       var emp3=el('div','card',{textAlign:'center',padding:'32px 16px',color:'var(--txt3)'});
-      ap(emp3,ap(el('div','',{fontSize:'36px',marginBottom:'8px'}),'💳'),ap(el('div','',{fontSize:'14px',fontWeight:'700',color:'var(--txt2)',marginBottom:'4px'}),'No EMIs tracked'),ap(el('div','',{fontSize:'12px'}),'Add your loans and EMIs to track them'));
+      ap(emp3,ap(el('div','',{fontSize:'36px',marginBottom:'8px'}),'💳'));
+      ap(emp3,ap(el('div','',{fontSize:'14px',fontWeight:'700',color:'var(--txt2)',marginBottom:'4px'}),'No EMIs tracked'));
+      ap(emp3,ap(el('div','',{fontSize:'12px'}),'Tap + Add EMI to track your loans'));
       ap(wrap,emp3);
     } else {
-      var totalEMI=0,totalLeft=0;
+      var totalMonthlyEMI=0,totalNeedToPay=0,totalAlreadyPaid=0;
+
       S.emis.forEach(function(emi){
         if(!emi.active)return;
-        totalEMI+=emi.emi;totalLeft+=emi.emi*emi.monthsLeft;
+        var paidMonths=(emi.totalMonths||0)-(emi.monthsLeft||0);
+        var needToPay=emi.emi*(emi.monthsLeft||0);
+        var alreadyPaid=emi.emi*paidMonths;
+        totalMonthlyEMI+=emi.emi;
+        totalNeedToPay+=needToPay;
+        totalAlreadyPaid+=alreadyPaid;
+
         var ec=el('div','emi-card');
-        var er=el('div','',{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'10px'});
-        var el2=el('div');
-        ap(el2,ap(el('div','',{fontSize:'14px',fontWeight:'800',color:'#4f46e5'}),emi.name));
-        ap(el2,ap(el('div','',{fontSize:'11px',color:'var(--txt3)',marginTop:'2px'}),'Due: '+emi.dueDate+' | '+emi.monthsLeft+' months left'));
-        var er2=el('div','',{textAlign:'right'});
-        ap(er2,ap(el('div','',{fontSize:'18px',fontWeight:'900',color:'#6366f1'}),fmt(emi.emi)+'/mo'));
-        ap(er2,ap(el('div','',{fontSize:'11px',color:'var(--txt3)',marginTop:'2px'}),'Total left: '+fmt(emi.emi*emi.monthsLeft)));
-        ap(er,el2,er2);ap(ec,er);
-        // Progress
-        if(emi.total>0){
-          var paid=emi.total-(emi.emi*emi.monthsLeft);
-          var ppct=Math.min(Math.round((paid/emi.total)*100),100);
-          var prow2=el('div','',{display:'flex',justifyContent:'space-between',fontSize:'10px',color:'var(--txt3)',marginBottom:'4px'});
-          ap(prow2,ap(el('span'),'Paid: '+fmt(Math.max(0,paid))+' ('+ppct+'%)'),ap(el('span'),'Remaining: '+fmt(emi.emi*emi.monthsLeft)));
-          ap(ec,prow2,pb(Math.max(0,paid),emi.total,'#6366f1',8,false));
+
+        // Header - name + EMI amount
+        var eHdr=el('div','',{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'12px'});
+        var eLeft=el('div');
+        ap(eLeft,ap(el('div','',{fontSize:'15px',fontWeight:'800',color:'#4f46e5'}),emi.name));
+        ap(eLeft,ap(el('div','',{fontSize:'11px',color:'var(--txt3)',marginTop:'3px'}),'Due: '+emi.dueDate));
+        var eRight=el('div','',{textAlign:'right'});
+        ap(eRight,ap(el('div','',{fontSize:'11px',color:'var(--txt3)',marginBottom:'2px'}),'Monthly EMI'));
+        ap(eRight,ap(el('div','',{fontSize:'20px',fontWeight:'900',color:'#6366f1'}),fmt(emi.emi)));
+        ap(eHdr,eLeft,eRight);ap(ec,eHdr);
+
+        // 3 key stats
+        var statsGrid=el('div','',{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'8px',marginBottom:'12px'});
+        [
+          ['✅ Paid',String(paidMonths)+' mo','#10b981'],
+          ['⏳ Remaining',String(emi.monthsLeft||0)+' mo','#f97316'],
+          ['📅 Total',String(emi.totalMonths||0)+' mo','#6366f1']
+        ].forEach(function(it){
+          var sb=el('div','',{background:'var(--surface2)',borderRadius:'10px',padding:'8px 6px',textAlign:'center',border:'1.5px solid var(--border)'});
+          ap(sb,ap(el('div','',{fontSize:'9px',color:'var(--txt3)',fontWeight:'700',textTransform:'uppercase',marginBottom:'3px'}),it[0]));
+          ap(sb,ap(el('div','',{fontSize:'14px',fontWeight:'800',color:it[2]}),it[1]));
+          ap(statsGrid,sb);
+        });
+        ap(ec,statsGrid);
+
+        // Amount breakdown
+        var amtGrid=el('div','',{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px',marginBottom:'12px'});
+        [
+          ['💰 Already Paid',fmt(alreadyPaid),'#10b981','#f0fdf4','#86efac'],
+          ['🔴 Need to Pay',fmt(needToPay),'#ef4444','#fef2f2','#fca5a5']
+        ].forEach(function(it){
+          var sb=el('div','',{background:it[3],borderRadius:'10px',padding:'10px',textAlign:'center',border:'1.5px solid '+it[4]});
+          ap(sb,ap(el('div','',{fontSize:'10px',fontWeight:'700',color:it[2],marginBottom:'4px'}),it[0]));
+          ap(sb,ap(el('div','',{fontSize:'16px',fontWeight:'900',color:it[2]}),it[1]));
+          ap(amtGrid,sb);
+        });
+        ap(ec,amtGrid);
+
+        // Progress bar
+        if(emi.totalMonths>0){
+          var paidPct=Math.round((paidMonths/emi.totalMonths)*100);
+          var prow3=el('div','',{marginBottom:'6px'});
+          var pTop=el('div','',{display:'flex',justifyContent:'space-between',fontSize:'11px',color:'var(--txt3)',marginBottom:'5px'});
+          ap(pTop,ap(el('span'),'Progress: '+paidPct+'% paid'),ap(el('span'),paidMonths+' of '+emi.totalMonths+' months'));
+          var pBar=el('div','',{height:'10px',background:'var(--border)',borderRadius:'6px',overflow:'hidden',position:'relative'});
+          var pFill=el('div','',{height:'100%',borderRadius:'6px',background:'linear-gradient(90deg,#10b981,#34d399)',width:paidPct+'%',transition:'width .5s'});
+          ap(pBar,pFill);
+          addTip(pBar,'Paid: '+paidPct+'% ('+paidMonths+' months)');
+          ap(prow3,pTop,pBar);ap(ec,prow3);
         }
-        // Delete btn
-        var delRow=el('div','',{display:'flex',justifyContent:'flex-end',marginTop:'10px'});
+
+        // Edit months remaining + Delete
+        var btnRow=el('div','',{display:'flex',gap:'8px',marginTop:'8px'});
+
+        // Quick update remaining months
+        var updWrap=el('div','',{display:'flex',gap:'6px',flex:'1',alignItems:'center'});
+        var updLbl=el('div','',{fontSize:'11px',color:'var(--txt3)',flexShrink:'0'});updLbl.textContent='Update remaining:';
+        var updInp=el('input','',{fontFamily:'inherit'});
+        updInp.style.cssText='width:55px;background:var(--inp);border:1.5px solid var(--border);border-radius:8px;padding:5px 8px;font-size:12px;font-weight:700;color:var(--txt);outline:none;text-align:center';
+        updInp.type='number';updInp.value=emi.monthsLeft||0;updInp.min='0';updInp.max=emi.totalMonths||99;
+        var updBtn=el('button','',{fontFamily:'inherit'});
+        updBtn.style.cssText='background:#6366f1;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer';
+        updBtn.textContent='Update';
+        updBtn.addEventListener('click',(function(eid){return function(){
+          var newRem=Number(updInp.value)||0;
+          saveEmis(S.emis.map(function(x){return x.id===eid?Object.assign({},x,{monthsLeft:newRem}):x;}));
+          render();
+        };})(emi.id));
+        ap(updWrap,updLbl,updInp,updBtn);
+
         var delE=el('button','',{fontFamily:'inherit'});
-        delE.style.cssText='background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;border-radius:7px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600';
+        delE.style.cssText='background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer;font-weight:600;flex-shrink:0';
         delE.textContent='Remove';
-        delE.addEventListener('click',(function(eid){return function(){saveEmis(S.emis.filter(function(x){return x.id!==eid;}));render();};})(emi.id));
-        ap(delRow,delE);ap(ec,delRow);ap(wrap,ec);
+        delE.addEventListener('click',(function(eid){return function(){
+          if(confirm('Remove this EMI?')){saveEmis(S.emis.filter(function(x){return x.id!==eid;}));render();}
+        };})(emi.id));
+
+        ap(btnRow,updWrap,delE);ap(ec,btnRow);ap(wrap,ec);
       });
-      // Summary
+
+      // Summary card
       var emiSum=el('div','card');
       ap(emiSum,ap(el('div','sec-lbl'),'EMI Summary'));
-      var esiGrid=el('div','',{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px'});
-      [['Monthly EMI',fmt(totalEMI),'#6366f1'],['Total Outstanding',fmt(totalLeft),'#ef4444']].forEach(function(it){
-        var sb=el('div','',{background:'var(--inp)',borderRadius:'10px',padding:'10px 8px',textAlign:'center',border:'1.5px solid var(--border)'});
+      var esiGrid=el('div','',{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'8px'});
+      [
+        ['Monthly EMI',fmt(totalMonthlyEMI),'#6366f1'],
+        ['Already Paid',fmt(totalAlreadyPaid),'#10b981'],
+        ['Need to Pay',fmt(totalNeedToPay),'#ef4444']
+      ].forEach(function(it){
+        var sb=el('div','',{background:'var(--inp)',borderRadius:'10px',padding:'9px 8px',textAlign:'center',border:'1.5px solid var(--border)'});
         ap(sb,ap(el('div','',{fontSize:'9px',textTransform:'uppercase',color:'var(--txt3)',fontWeight:'700',marginBottom:'3px'}),it[0]));
-        ap(sb,ap(el('div','',{fontSize:'14px',fontWeight:'800',color:it[1]}),it[1]));
+        ap(sb,ap(el('div','',{fontSize:'13px',fontWeight:'800',color:it[1]}),it[1]));
         ap(esiGrid,sb);
       });
       ap(emiSum,esiGrid);ap(wrap,emiSum);
